@@ -1,17 +1,22 @@
 package cm.nsi.msscbeerservice.web.model.controller;
 
+import cm.nsi.msscbeerservice.bootstrap.BeerLoader;
+import cm.nsi.msscbeerservice.services.BeerService;
 import cm.nsi.msscbeerservice.web.model.BeerDto;
 import cm.nsi.msscbeerservice.web.model.BeerStyleEnum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,9 +33,13 @@ class BeerControllerTest {
 
     @Autowired
     ObjectMapper objectMapper;
+    @MockBean
+    BeerService beerService;
 
     @Test
     void getBeerById() throws Exception {
+        given(beerService.getById(any())).willReturn(getValidBeer());
+
         mockMvc.perform(get("/api/v1/beer/" + UUID.randomUUID()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -40,6 +49,8 @@ class BeerControllerTest {
         BeerDto beerDto = getValidBeer();
         String beerDtoJson = objectMapper.writeValueAsString(beerDto);
 
+        given(beerService.saveNewBeer(any())).willReturn(getValidBeer());
+
         mockMvc.perform(post("/api/v1/beer/")
                 .contentType(MediaType.APPLICATION_JSON).content(beerDtoJson))
                 .andExpect(status().isCreated());
@@ -47,6 +58,8 @@ class BeerControllerTest {
 
     @Test
     void updateBeerById() throws Exception {
+        given(beerService.updateBeer(any(), any())).willReturn(getValidBeer());
+
         BeerDto beerDto = getValidBeer();
         String beerDtoJson = objectMapper.writeValueAsString(beerDto);
 
@@ -58,7 +71,7 @@ class BeerControllerTest {
         return BeerDto.builder()
                 .beerName("Kadji beer")
                 .beerStyle(BeerStyleEnum.ALE)
-                .upc(1235643942L)
+                .upc(BeerLoader.BEER_2_UPC)
                 .price(new BigDecimal("12.95"))
                 .build();
     }
